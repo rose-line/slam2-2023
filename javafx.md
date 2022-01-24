@@ -145,7 +145,7 @@ Deux toutes petites extensions VS Code pratiques à installer :
   - c'est le fichier `PrimaryController` que l'on retrouve dans notre projet
   - il est complètement qualifié, c'est-à-dire qu'il est précédé du nom de son package (`fr.votredomaine`)
   - quand vous définissez une vue, **vous devez toujours définir le _controller_ associé**
-- Sélectionnez le bouton _Switch to Secondary View_
+- Sélectionnez maintenant le bouton _Switch to Secondary View_
 - Dans le panneau _Inspector_, sous-panneau *Code* :
   - localisez `fx:id` (_identity_)
   - notez que le champ est déjà renseigné avec le nom `primaryButton`  : c'est le nom du bouton
@@ -177,3 +177,117 @@ Deux toutes petites extensions VS Code pratiques à installer :
   - pour chaque événement auquel on voudra réagir, renseigner le nom de méthode correspondante sur le _control_ associé
   - utiliser SB pour vous indiquer à quoi doit ressembler le code de _controller_
   - utiliser la notation pointée pour accéder aux propriétés des _controls_ (en lecture ou en écriture)
+
+## Implémentation d'un nouvel écran
+
+Voici donc les étapes à considérer lorque vous concevez un nouvel écran :
+
+- Partir d'un fichier .fxml existant (en le copiant) ou bien en créant un fichier .fxml vierge sous SB
+  - rappel : les fichiers .fxml doivent être enregistrés dans un sous-répertoire (correspondant au nom de votre package) du répertoire `resources` de votre projet pour que Java les trouvent (par exemple `mon-projet\src\main\resources\fr\pgah\Connexion.fxml`)
+- Donner un nom expressif à ce fichier .fxml
+  - (donner un nom expressif à tout ce qu'on peut nommer est (très) important en programmation)
+- Créer l'interface graphique en glissant-déposant les _controls_ dont vous avez besoin
+- Utiliser les panneaux _Proprerties_ et _Layout_ de droite pour adapter l'élément à vos besoins (texte affiché, couleur, taille... en fonction de la nature de l'élément)
+- Utiliser le troisième panneau _Code_ de droite pour :
+  - donner un nom à l'élément grâce à l'attribut `fx:id` (uniquement si vous avez besoin d'y accéder depuis le code Java par la suite, par exemple pour récupérer le contenu d'un _textfield_)
+  - indiquer un nom de méthode qui se produira lorsque l'élément sera « actionné » grâce à l'attribut `On Action` ou un autre désignant l'événement (uniquement si vous voulez réagir à une action sur cet élément, le plus souvent pour un clic de bouton)
+- Quand vous avez un écran suffisamment rempli pour la mise en place d'au moins une fonctionnalité, il est temps de passer à la logique côté Java sous VS Code, pour coder le _controller_ qui va correspondre à cette vue
+- Mais d'abord, pour se faciliter la tâche, on va demander à SB de nous montrer à quoi devra ressembler le code du _controller_ pour qu'il prenne en compte tous les éléments que l'on a nommés et les méthodes que l'on a mises en place
+  - menu `View/Show Sample Controller Skeleton`
+  - copier le code du _controller_ présenté
+  - voici un exemple avec un champ texte nommé `txtPrenom` et un bouton nommé `btnValider` ; on a également indiqué qu'un clic sur ce bouton lance la méthode `btnValiderClic`
+
+```java
+package fr.pgah;
+
+import javafx.event.ActionEvent;
+import javafx.fxml.FXML;
+import javafx.scene.control.TextField;
+import javafx.scene.control.Button;
+
+public class TestController {
+
+  @FXML
+  private TextField txtPrenom;
+
+  @FXML
+  private Button btnValider;
+
+  @FXML
+  void btnValiderClic(ActionEvent event) {
+  }
+}
+```
+
+- Notez la façon dont les éléments graphiques sont nommés : un préfixe indique de quel type d'élément il s'agit
+  - `txt` pour un champ texte, `btn` pour un bouton, etc.
+  - ce n'est pas obligatoire mais c'est une bonne convention
+- Sous VS Code, créer un nouveau fichier aux côté du fichier `App.java`, dans le répertoire principal de votre package
+  - même nom que pour le fichier .fxml, avec le suffixe `Controller` (ex: `ConnexionController.java`)
+  - y coller le code du « squelette » donné par SB
+- N'oubliez pas que **chaque variable et chaque méthode déclarée en FXML (depuis SB) doit avoir l'annotation `@FXML`** sinon Java ne considérera pas que les deux sont reliés (mettre plusieurs déclarations de variables sous une seule annotation `FXML` n'est pas suffisant)
+- Pour relier effectivement le fichier FXML avec ce _controller_, retourner dans SB
+  - panneau _Controller_, en bas à gauche
+  - indiquer le nom complet de la classe _controller_ nouvellement définie
+  - conseil : utiliser le _dropdown_ pour être sûr de ne pas se tromper
+- Il faut maintenant implémenter les méthodes d'action pour effectuer les traitements correspondants
+- Souvent, on a besoin de récupérer des informations depuis l'interface graphique pour effectuer le traitement
+  - ex : récupérer le contenu d'un champ texte
+  - il faut « interroger » l'objet correspondant
+  - ex : `txtPrenom.getText()` retourne le contenu du champ texte
+  - on peut ensuite utiliser cette donnée dans un traitement quelconque :
+
+```java
+@FXML
+void btnValiderClic(ActionEvent event) {
+  String lePrenom = txtPrenom.getText();
+  // Affichage sur la console pour vérification
+  System.out.println("Prénom récupéré :" + lePrenom);
+  // Puis on peut utiliser lePrenom dans une requête SQL
+  // Code de connexion BDD non reproduit...
+
+  // Préparation de la requête
+  String req = "SELECT * FROM Users WHERE prenom='" + lePrenom + "'";
+  Statement statement = conn.createStatement();
+  // Exécution de la requête
+  ResultSet result = statement.executeQuery(req);
+  // On boucle pour traiter tous les résultats
+  while (result.next()){
+    // Récup du num et de l'email depuis cet enregistrement
+    String nom = result.getString("nom");
+    String email = result.getString("email");
+    // Simple affichage dans la console de sortie
+    System.out.println("Nom : " + nom + " ; email : " + email));
+  }
+}
+```
+
+- Les `println` sont utiles pour suivre l'avancée des opérations et vérifier que les données récupérées sont cohérentes, mais on va aussi vouloir mettre à jour l'écran JavaFX avec ces données
+- Il faut de nouveau aller interroger les objets qui correspondent aux éléments à mettre à jour pour savoir comment les modifier
+  - une façon d'explorer est de taper `txtPrenom.` dans l'IDE : VS Code va nous montrer toutes les méthodes pouvant être appelées depuis cet objet
+  - on peut aussi [se renseigner sur Internet](http://tutorials.jenkov.com/javafx/textfield.html) sur l'usage du _control_ JavaFX en question
+  - par exemple, pour afficher dans un `TextField` une informations d'un employé dont a a récupéré l'id :
+
+```java
+@FXML
+void btnValiderClic(ActionEvent event) {
+  // Récupération de l'id depuis un champ texte
+  int num = txtNumEmploye.getText();
+  // Code de connexion BDD non reproduit...
+  // Préparation de la requête
+  String req = "SELECT prenom FROM Employes WHERE id='" + num + "'";
+  Statement statement = conn.createStatement();
+  // Exécution de la requête
+  ResultSet result = statement.executeQuery(req);
+  // Cette fois on n'a qu'un seul résultat (au plus)
+  // puisqu'on a filtré sur la clé primaire
+  // On teste pour savoir si on a effectivement un résultat
+  if (rs.next())
+  {
+    // Récup du prénom depuis le résultat de la requête
+    String prenom = rs.getString("prenom");
+    // Mise à jour du champ texte JavaFX avec setText
+    txtPrenom.setText(prenom);
+  }
+}
+```
