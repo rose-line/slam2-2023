@@ -167,6 +167,7 @@ Deux toutes petites extensions VS Code pratiques à installer :
 - Dans `secondary.fxml`, faire en sorte que, lorsque l'on clique sur le bouton :
   - la couleur du texte du bouton passe en rouge
   - le texte du label du dessus se change en "COUCOU !"
+  - (consultez la section plus bas pour les détails si vous n'y arrivez pas)
 
 ### N'oubliez pas
 
@@ -178,7 +179,7 @@ Deux toutes petites extensions VS Code pratiques à installer :
   - utiliser SB pour vous indiquer à quoi doit ressembler le code de _controller_
   - utiliser la notation pointée pour accéder aux propriétés des _controls_ (en lecture ou en écriture)
 
-## Implémentation d'un nouvel écran
+## Détails de l'implémentation d'un nouvel écran
 
 Voici donc les étapes à considérer lorque vous concevez un nouvel écran :
 
